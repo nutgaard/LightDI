@@ -10,11 +10,12 @@ import org.reflections.scanners.TypeAnnotationsScanner;
 import org.slf4j.Logger;
 
 import java.lang.annotation.Annotation;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static no.utgdev.lightdi.aop.AOPRegistry.AOPConfig.*;
+import static no.utgdev.lightdi.aop.AOPRegistry.AOPConfig.Property;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class BeanFactory {
@@ -42,6 +43,10 @@ public class BeanFactory {
         this.rootPackage = rootPackage;
         this.beanDefinitions = new LinkedList<>();
         scanForBeanDefinitions();
+    }
+
+    public List<BeanDefinition> getAllBeanDefinitions() {
+        return Collections.unmodifiableList(beanDefinitions);
     }
 
     private void scanForBeanDefinitions() {

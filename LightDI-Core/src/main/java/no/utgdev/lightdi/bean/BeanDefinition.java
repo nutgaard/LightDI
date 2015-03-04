@@ -56,10 +56,12 @@ public abstract class BeanDefinition {
 
     public static class FromMethod extends BeanDefinition {
         private final Method method;
+        private final Class declaringClass;
 
         public FromMethod(Method method) {
-            super(method.getDeclaringClass());
+            super(method.getReturnType());
             this.method = method;
+            this.declaringClass = method.getDeclaringClass();
         }
     }
 }
