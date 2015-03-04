@@ -4,8 +4,8 @@ import no.utgdev.lightdi.annotations.AOPAnnotation;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 
+import java.lang.annotation.Annotation;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,25 +21,36 @@ public class AOPRegistry {
         return instance;
     }
 
-    public AOPRegistry() {
+    @SuppressWarnings("unchecked")
+    private AOPRegistry() {
         Reflections reflections = new Reflections("");
-
-        registry = reflections.getSubTypesOf(AOPAnnotation.class)
+        logger.info("Scanning for annotations annotated with AOPAnnotation.class");
+        registry = reflections.getTypesAnnotatedWith(AOPAnnotation.class)
                 .stream()
-                .filter((cls) -> cls != AOPAnnotation.class)
+                .filter((Class<?> cls) -> cls != AOPAnnotation.class)
+                .map(cls -> (Class<? extends Annotation>)cls)
                 .map(AOPConfig::new)
                 .collect(Collectors.toList());
+
+        logger.info("AOPRegistry started. Found: " + registry);
     }
 
     public List<AOPConfig> getAll() {
         return Collections.unmodifiableList(this.registry);
     }
 
-    class AOPConfig {
-        public final Class<?> annotationClass;
+    public static class AOPConfig {
+        public final Class<? extends Annotation> annotationClass;
 
-        public AOPConfig(Class<?> annotationClass) {
+        public AOPConfig(Class<? extends Annotation> annotationClass) {
             this.annotationClass = annotationClass;
+        }
+
+        @Override
+        public String toString() {
+            return "AOPConfig{" +
+                    "annotationClass=" + annotationClass +
+                    '}';
         }
     }
 }

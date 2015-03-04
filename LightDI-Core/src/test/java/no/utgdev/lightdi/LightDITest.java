@@ -3,7 +3,6 @@ package no.utgdev.lightdi;
 import no.utgdev.lightdi.bean.BeanFactory;
 import no.utgdev.lightdi.exceptions.LightDIAlreadyStartedException;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;

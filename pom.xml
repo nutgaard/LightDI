@@ -10,8 +10,6 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>LightDI-Core</module>
-        <module>LightDI-AOP</module>
-        <module>LightDI-Test</module>
     </modules>
 
     <properties>

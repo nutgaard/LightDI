@@ -1,6 +1,7 @@
 package no.utgdev.lightdi.bean;
 
 import no.utgdev.lightdi.annotations.Bean;
+import no.utgdev.lightdi.aop.AOPRegistry;
 import no.utgdev.lightdi.exceptions.LightDIAlreadyStartedException;
 import no.utgdev.lightdi.exceptions.LightDIHasNotBeenStartedException;
 import org.reflections.Reflections;
@@ -8,8 +9,10 @@ import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.slf4j.Logger;
 
-import java.lang.reflect.Method;
-import java.util.Set;
+import java.lang.annotation.Annotation;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -18,6 +21,7 @@ public class BeanFactory {
 
     private static BeanFactory instance;
     private final String rootPackage;
+    private List<BeanDefinition> beanDefinitions;
 
     public static BeanFactory getInstance() {
         if (instance == null) {
@@ -35,14 +39,41 @@ public class BeanFactory {
 
     public BeanFactory(String rootPackage) {
         this.rootPackage = rootPackage;
+        this.beanDefinitions = new LinkedList<>();
         scanForBeanDefinitions();
     }
 
     private void scanForBeanDefinitions() {
+        logger.info("Starting scanning for bean definitions.");
         Reflections reflections = new Reflections(rootPackage, new MethodAnnotationsScanner(), new TypeAnnotationsScanner());
 
-        Set<Method> methods = reflections.getMethodsAnnotatedWith(Bean.class);
-        Set<Class<?>> types = reflections.getTypesAnnotatedWith(Bean.class);
+        List<Class<? extends Annotation>> scanForAnnotations = new LinkedList<>();
+        scanForAnnotations.add(Bean.class);
+        scanForAnnotations.addAll(
+                AOPRegistry.getInstance().getAll()
+                        .stream()
+                        .map(config -> config.annotationClass)
+                        .collect(Collectors.toList())
+        );
+
+        logger.debug("Annotations to scan for: "+scanForAnnotations);
+
+        for (Class<? extends Annotation> annotationClass : scanForAnnotations) {
+            beanDefinitions.addAll(
+                    reflections.getTypesAnnotatedWith(annotationClass)
+                            .stream()
+                            .map(BeanDefinition.FromType::new)
+                            .collect(Collectors.toList())
+            );
+            beanDefinitions.addAll(
+                    reflections.getMethodsAnnotatedWith(annotationClass)
+                            .stream()
+                            .map(BeanDefinition.FromMethod::new)
+                            .collect(Collectors.toList())
+            );
+        }
+
+        logger.info("Found bean definitions: "+beanDefinitions);
 
     }
 }
