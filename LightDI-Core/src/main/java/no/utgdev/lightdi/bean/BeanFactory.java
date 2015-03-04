@@ -1,11 +1,11 @@
 package no.utgdev.lightdi.bean;
 
-import no.utgdev.lightdi.annotations.Bean;
 import no.utgdev.lightdi.aop.AOPRegistry;
 import no.utgdev.lightdi.exceptions.LightDIAlreadyStartedException;
 import no.utgdev.lightdi.exceptions.LightDIHasNotBeenStartedException;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.slf4j.Logger;
 
@@ -45,18 +45,14 @@ public class BeanFactory {
 
     private void scanForBeanDefinitions() {
         logger.info("Starting scanning for bean definitions.");
-        Reflections reflections = new Reflections(rootPackage, new MethodAnnotationsScanner(), new TypeAnnotationsScanner());
+        Reflections reflections = new Reflections(rootPackage, new MethodAnnotationsScanner(), new TypeAnnotationsScanner(), new SubTypesScanner());
 
-        List<Class<? extends Annotation>> scanForAnnotations = new LinkedList<>();
-        scanForAnnotations.add(Bean.class);
-        scanForAnnotations.addAll(
-                AOPRegistry.getInstance().getAll()
-                        .stream()
-                        .map(config -> config.annotationClass)
-                        .collect(Collectors.toList())
-        );
+        List<Class<? extends Annotation>> scanForAnnotations = AOPRegistry.getInstance().getAll()
+                .stream()
+                .map(config -> config.annotationClass)
+                .collect(Collectors.toList());
 
-        logger.debug("Annotations to scan for: "+scanForAnnotations);
+        logger.debug("Annotations to scan for: " + scanForAnnotations);
 
         for (Class<? extends Annotation> annotationClass : scanForAnnotations) {
             beanDefinitions.addAll(
@@ -73,7 +69,7 @@ public class BeanFactory {
             );
         }
 
-        logger.info("Found bean definitions: "+beanDefinitions);
+        logger.info("Found bean definitions: " + beanDefinitions);
 
     }
 }
