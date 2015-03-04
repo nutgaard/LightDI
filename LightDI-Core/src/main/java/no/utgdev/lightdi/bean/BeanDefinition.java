@@ -3,12 +3,11 @@ package no.utgdev.lightdi.bean;
 import javax.inject.Inject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static java.util.Arrays.asList;
+import static no.utgdev.lightdi.utils.CollectorUtils.toUnmodifiableList;
+import static no.utgdev.lightdi.utils.ReflectionStreamUtils.ClassUtils.fieldsIn;
+import static no.utgdev.lightdi.utils.ReflectionStreamUtils.FieldUtils.hasAnnotation;
 
 public abstract class BeanDefinition {
     protected final Class<?> beanClass;
@@ -20,14 +19,11 @@ public abstract class BeanDefinition {
     }
 
     private List<BeanDefinition> findBeanDependencies() {
-        List<BeanDefinition> list = new LinkedList<>();
-        list.addAll(asList(this.beanClass.getDeclaredFields())
-                .stream()
-                .filter((Field f) -> f.isAnnotationPresent(Inject.class))
-                .map((Field f) -> new BeanDefinition.FromType(f.getType()))
-                .collect(Collectors.toList()));
-
-        return Collections.unmodifiableList(list);
+        return fieldsIn(this.beanClass)
+                        .filter(hasAnnotation(Inject.class))
+                        .map(Field::getType)
+                        .map(BeanDefinition.FromType::new)
+                        .collect(toUnmodifiableList());
     }
 
     @Override

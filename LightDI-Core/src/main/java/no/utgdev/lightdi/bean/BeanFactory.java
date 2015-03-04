@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static no.utgdev.lightdi.aop.AOPRegistry.AOPConfig.*;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class BeanFactory {
@@ -47,14 +48,13 @@ public class BeanFactory {
         logger.info("Starting scanning for bean definitions.");
         Reflections reflections = new Reflections(rootPackage, new MethodAnnotationsScanner(), new TypeAnnotationsScanner(), new SubTypesScanner());
 
-        List<Class<? extends Annotation>> scanForAnnotations = AOPRegistry.getInstance().getAll()
-                .stream()
-                .map(config -> config.annotationClass)
+        List<Class<? extends Annotation>> registeredAnnotationsTypes = AOPRegistry.getInstance().getAllStream()
+                .map(Property.annotationClass)
                 .collect(Collectors.toList());
 
-        logger.debug("Annotations to scan for: " + scanForAnnotations);
+        logger.debug("Annotations to scan for: " + registeredAnnotationsTypes);
 
-        for (Class<? extends Annotation> annotationClass : scanForAnnotations) {
+        for (Class<? extends Annotation> annotationClass : registeredAnnotationsTypes) {
             beanDefinitions.addAll(
                     reflections.getTypesAnnotatedWith(annotationClass)
                             .stream()

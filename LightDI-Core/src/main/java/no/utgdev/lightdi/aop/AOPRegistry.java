@@ -7,7 +7,9 @@ import org.slf4j.Logger;
 import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -28,7 +30,7 @@ public class AOPRegistry {
         registry = reflections.getTypesAnnotatedWith(AOPAnnotation.class)
                 .stream()
                 .filter((Class<?> cls) -> cls != AOPAnnotation.class)
-                .map(cls -> (Class<? extends Annotation>)cls)
+                .map(cls -> (Class<? extends Annotation>) cls)
                 .map(AOPConfig::new)
                 .collect(Collectors.toList());
 
@@ -37,6 +39,10 @@ public class AOPRegistry {
 
     public List<AOPConfig> getAll() {
         return Collections.unmodifiableList(this.registry);
+    }
+
+    public Stream<AOPConfig> getAllStream() {
+        return getAll().stream();
     }
 
     public static class AOPConfig {
@@ -51,6 +57,15 @@ public class AOPRegistry {
             return "AOPConfig{" +
                     "annotationClass=" + annotationClass +
                     '}';
+        }
+
+        public static class Property {
+            public static Function<? super AOPConfig, Class<? extends Annotation>> annotationClass = new Function<AOPConfig, Class<? extends Annotation>>() {
+                @Override
+                public Class<? extends Annotation> apply(AOPConfig aopConfig) {
+                    return aopConfig.annotationClass;
+                }
+            };
         }
     }
 }
