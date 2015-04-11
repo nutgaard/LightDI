@@ -27,7 +27,7 @@ public class AOPRegistry {
     private AOPRegistry() {
         Reflections reflections = new Reflections("");
         logger.info("Scanning for annotations annotated with AOPAnnotation.class");
-        registry = reflections.getTypesAnnotatedWith(AOPAnnotation.class)
+        registry = reflections.getTypesAnnotatedWith(AOPAnnotation.class, true)
                 .stream()
                 .filter((Class<?> cls) -> cls != AOPAnnotation.class)
                 .map(cls -> (Class<? extends Annotation>) cls)
@@ -60,12 +60,7 @@ public class AOPRegistry {
         }
 
         public static class Property {
-            public static Function<? super AOPConfig, Class<? extends Annotation>> annotationClass = new Function<AOPConfig, Class<? extends Annotation>>() {
-                @Override
-                public Class<? extends Annotation> apply(AOPConfig aopConfig) {
-                    return aopConfig.annotationClass;
-                }
-            };
+            public static Function<? super AOPConfig, Class<? extends Annotation>> annotationClass = (AOPConfig aopConfig) -> aopConfig.annotationClass;
         }
     }
 }

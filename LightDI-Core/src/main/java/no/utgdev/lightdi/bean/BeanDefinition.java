@@ -52,6 +52,13 @@ public abstract class BeanDefinition {
         public FromType(Class beanClass) {
             super(beanClass);
         }
+
+        @Override
+        public String toString() {
+            return "BeanDefinition.FromType{" +
+                    "beanClass=" + beanClass +
+                    '}';
+        }
     }
 
     public static class FromMethod extends BeanDefinition {
@@ -62,6 +69,15 @@ public abstract class BeanDefinition {
             super(method.getReturnType());
             this.method = method;
             this.declaringClass = method.getDeclaringClass();
+        }
+
+        @Override
+        public String toString() {
+            return "BeanDefinition.FromMethod{" +
+                    "beanClass=" + beanClass +
+                    ", method=" + method +
+                    ", declaringClass=" + declaringClass +
+                    '}';
         }
     }
 }

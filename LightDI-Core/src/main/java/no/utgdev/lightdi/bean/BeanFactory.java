@@ -3,6 +3,7 @@ package no.utgdev.lightdi.bean;
 import no.utgdev.lightdi.aop.AOPRegistry;
 import no.utgdev.lightdi.exceptions.LightDIAlreadyStartedException;
 import no.utgdev.lightdi.exceptions.LightDIHasNotBeenStartedException;
+import no.utgdev.lightdi.utils.StreamUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.scanners.SubTypesScanner;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static no.utgdev.lightdi.aop.AOPRegistry.AOPConfig.Property;
+import static no.utgdev.lightdi.utils.StreamUtils.print;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class BeanFactory {
