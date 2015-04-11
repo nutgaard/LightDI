@@ -101,9 +101,13 @@ public class BeanFactory {
             );
 
         }
-
         logger.info("Found bean definitions: " + beanDefinitions);
+    }
 
+    public void findBeandefinitonDependencies() {
+        for (BeanDefinition beanDefinition : beanDefinitions) {
+            beanDefinition.findBeanDependencies();
+        }
     }
 
     public void validateConfiguration() {
@@ -121,6 +125,8 @@ public class BeanFactory {
 
     public void initializeBeans() {
         List<BeanDefinition> unresolvedBeans = new ArrayList<>(this.beanDefinitions);
+        int unresolved = unresolvedBeans.size();
+
         while (!unresolvedBeans.isEmpty()) {
             unresolvedBeans
                     .stream()
@@ -129,6 +135,10 @@ public class BeanFactory {
                     .forEach(initializeBean(unresolvedBeans));
 
             unresolvedBeans.removeAll(beans.keySet());
+            if (unresolved == unresolvedBeans.size()) {
+                throw new RuntimeException("You got cycles in your dependency graph: " + unresolvedBeans);
+            }
+            unresolved = unresolvedBeans.size();
         }
     }
 
@@ -154,9 +164,30 @@ public class BeanFactory {
                 return (T) entry.getValue();
             }
         }
-        BeanDefinition db = new BeanDefinition.FromType(cls);
+        BeanDefinition db = null;
+        //Check for previously found beandefinitions
+        for (BeanDefinition definition : beanDefinitions) {
+            if (definition.canFulfill(cls)) {
+                db = definition;
+                break;
+            }
+        }
+        //No definiton found, lets create one now.
+        if (db == null) {
+            db = new BeanDefinition.FromType(cls);
+        }
+
         Object bean = db.initialize();
         beans.put(db, bean);
         return (T) bean;
+    }
+
+    public BeanDefinition getBeanDefinition(Class<?> type) {
+        for (BeanDefinition beanDefinition : beanDefinitions) {
+            if (beanDefinition.beanClass == type) {
+                return beanDefinition;
+            }
+        }
+        throw new RuntimeException("Feil: " + type);
     }
 }

@@ -16,7 +16,7 @@ public class LightDI {
 
     private LightDI(String rootPackage) {
         BeanFactory.start(rootPackage);
-
+        BeanFactory.getInstance().findBeandefinitonDependencies();
         if (validateConfiguration) {
             BeanFactory.getInstance().validateConfiguration();
             if (initializeBeansOnStartup) {

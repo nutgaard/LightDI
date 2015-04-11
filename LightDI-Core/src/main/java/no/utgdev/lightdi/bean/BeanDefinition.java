@@ -15,18 +15,17 @@ import static no.utgdev.lightdi.utils.ReflectionStreamUtils.FieldUtils.hasAnnota
 
 public abstract class BeanDefinition {
     protected final Class<?> beanClass;
-    protected final List<BeanDefinition> beanDependencies;
+    protected List<BeanDefinition> beanDependencies;
 
     protected BeanDefinition(Class beanClass) {
         this.beanClass = beanClass;
-        this.beanDependencies = findBeanDependencies();
     }
 
-    private List<BeanDefinition> findBeanDependencies() {
-        return fieldsIn(this.beanClass)
+    public void findBeanDependencies() {
+        this.beanDependencies = fieldsIn(this.beanClass)
                 .filter(hasAnnotation(Inject.class))
                 .map(Field::getType)
-                .map(BeanDefinition.FromType::new)
+                .map(type -> BeanFactory.getInstance().getBeanDefinition(type))
                 .collect(toUnmodifiableList());
     }
 
@@ -47,7 +46,6 @@ public abstract class BeanDefinition {
     @Override
     public int hashCode() {
         int result = beanClass != null ? beanClass.hashCode() : 0;
-        result = 31 * result + (beanDependencies != null ? beanDependencies.hashCode() : 0);
         return result;
     }
 
