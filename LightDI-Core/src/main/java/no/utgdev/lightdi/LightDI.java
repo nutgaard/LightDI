@@ -9,12 +9,22 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class LightDI {
     final static Logger logger = getLogger(LightDI.class);
 
+    public static boolean validateConfiguration = true;
+    public static boolean initializeBeansOnStartup = true;
+
     private static LightDI instance;
     private final String rootPackage;
 
     private LightDI(String rootPackage) {
         this.rootPackage = rootPackage;
         BeanFactory.start(rootPackage);
+
+        if (validateConfiguration) {
+            BeanFactory.getInstance().validateConfiguration();
+            if (initializeBeansOnStartup) {
+                BeanFactory.getInstance().initializeBeans();
+            }
+        }
     }
 
     public static LightDI start(String rootPackage) {
@@ -26,5 +36,18 @@ public class LightDI {
         }
         instance = new LightDI(rootPackage);
         return instance;
+    }
+
+    public static <T> T getBean(Class<T> cls) {
+        BeanFactory factory = BeanFactory.getInstance().getBean(cls);
+
+        try {
+            return cls.newInstance();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

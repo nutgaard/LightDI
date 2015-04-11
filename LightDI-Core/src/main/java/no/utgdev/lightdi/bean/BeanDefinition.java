@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 
+import static java.util.Arrays.asList;
 import static no.utgdev.lightdi.utils.CollectorUtils.toUnmodifiableList;
 import static no.utgdev.lightdi.utils.ReflectionStreamUtils.ClassUtils.fieldsIn;
 import static no.utgdev.lightdi.utils.ReflectionStreamUtils.FieldUtils.hasAnnotation;
@@ -47,10 +48,17 @@ public abstract class BeanDefinition {
         return result;
     }
 
+    public abstract boolean canFulfill(Class<?> type);
+
     public static class FromType extends BeanDefinition {
 
         public FromType(Class beanClass) {
             super(beanClass);
+        }
+
+        @Override
+        public boolean canFulfill(Class<?> type) {
+            return type.isAssignableFrom(this.beanClass);
         }
 
         @Override
@@ -78,6 +86,11 @@ public abstract class BeanDefinition {
                     ", method=" + method +
                     ", declaringClass=" + declaringClass +
                     '}';
+        }
+
+        @Override
+        public boolean canFulfill(Class<?> type) {
+            return type.isAssignableFrom(this.method.getReturnType());
         }
     }
 }
