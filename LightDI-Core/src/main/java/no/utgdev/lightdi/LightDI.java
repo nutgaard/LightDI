@@ -13,10 +13,8 @@ public class LightDI {
     public static boolean initializeBeansOnStartup = true;
 
     private static LightDI instance;
-    private final String rootPackage;
 
     private LightDI(String rootPackage) {
-        this.rootPackage = rootPackage;
         BeanFactory.start(rootPackage);
 
         if (validateConfiguration) {
@@ -39,15 +37,6 @@ public class LightDI {
     }
 
     public static <T> T getBean(Class<T> cls) {
-        BeanFactory factory = BeanFactory.getInstance().getBean(cls);
-
-        try {
-            return cls.newInstance();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return BeanFactory.getInstance().getBean(cls);
     }
 }

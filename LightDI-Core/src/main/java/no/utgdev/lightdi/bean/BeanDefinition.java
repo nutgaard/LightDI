@@ -1,11 +1,14 @@
 package no.utgdev.lightdi.bean;
 
+import no.utgdev.lightdi.exceptions.LightDIFoundUnfulfilledBeans;
+
 import javax.inject.Inject;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.function.Consumer;
 
-import static java.util.Arrays.asList;
 import static no.utgdev.lightdi.utils.CollectorUtils.toUnmodifiableList;
 import static no.utgdev.lightdi.utils.ReflectionStreamUtils.ClassUtils.fieldsIn;
 import static no.utgdev.lightdi.utils.ReflectionStreamUtils.FieldUtils.hasAnnotation;
@@ -21,10 +24,10 @@ public abstract class BeanDefinition {
 
     private List<BeanDefinition> findBeanDependencies() {
         return fieldsIn(this.beanClass)
-                        .filter(hasAnnotation(Inject.class))
-                        .map(Field::getType)
-                        .map(BeanDefinition.FromType::new)
-                        .collect(toUnmodifiableList());
+                .filter(hasAnnotation(Inject.class))
+                .map(Field::getType)
+                .map(BeanDefinition.FromType::new)
+                .collect(toUnmodifiableList());
     }
 
     @Override
@@ -50,6 +53,8 @@ public abstract class BeanDefinition {
 
     public abstract boolean canFulfill(Class<?> type);
 
+    public abstract Object initialize();
+
     public static class FromType extends BeanDefinition {
 
         public FromType(Class beanClass) {
@@ -59,6 +64,35 @@ public abstract class BeanDefinition {
         @Override
         public boolean canFulfill(Class<?> type) {
             return type.isAssignableFrom(this.beanClass);
+        }
+
+        @Override
+        public Object initialize() {
+            try {
+                BeanFactory beanFactory = BeanFactory.getInstance();
+                Object obj = this.beanClass.newInstance();
+
+                fieldsIn(this.beanClass)
+                        .filter(hasAnnotation(Inject.class))
+                        .forEach(new Consumer<Field>() {
+                            @Override
+                            public void accept(Field field) {
+                                Class<?> type = field.getType();
+                                try {
+                                    Object typeInstance = beanFactory.getBean(type);
+
+                                    field.setAccessible(true);
+                                    field.set(obj, typeInstance);
+                                } catch (IllegalAccessException e) {
+                                    throw new LightDIFoundUnfulfilledBeans("Could not find an initialized bean fulfulling the class: " + type + " when initializing " + obj, e);
+                                }
+                            }
+                        });
+
+                return obj;
+            } catch (InstantiationException | IllegalAccessException e) {
+                throw new LightDIFoundUnfulfilledBeans("Could not initialize object: " + this.beanClass, e);
+            }
         }
 
         @Override
@@ -91,6 +125,17 @@ public abstract class BeanDefinition {
         @Override
         public boolean canFulfill(Class<?> type) {
             return type.isAssignableFrom(this.method.getReturnType());
+        }
+
+        @Override
+        public Object initialize() {
+            try {
+                BeanFactory beanFactory = BeanFactory.getInstance();
+                Object bean = beanFactory.getBean(this.declaringClass);
+                return method.invoke(bean);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new LightDIFoundUnfulfilledBeans("Could not invoke method: " + method + " found in " + declaringClass + " as part of creating bean: " + beanClass, e);
+            }
         }
     }
 }

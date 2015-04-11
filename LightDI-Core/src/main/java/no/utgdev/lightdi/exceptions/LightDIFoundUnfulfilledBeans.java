@@ -12,11 +12,15 @@ public class LightDIFoundUnfulfilledBeans extends RuntimeException {
         super(message);
     }
 
+    public LightDIFoundUnfulfilledBeans(String message, Throwable cause) {
+        super(message, cause);
+    }
+
     public static LightDIFoundUnfulfilledBeans create(List<Field> fields) {
         StringBuilder sb = new StringBuilder();
         sb.append("LightDI found @Inject annotations which could not be fulfilled by the current beandefinitons.\n");
         for (Field field : fields) {
-                sb.append("Found no definition for: ").append(field.getType().getName()).append("\n");
+            sb.append("Found no definition for: ").append(field.getType().getName()).append("\n");
         }
         return new LightDIFoundUnfulfilledBeans(sb.toString());
     }

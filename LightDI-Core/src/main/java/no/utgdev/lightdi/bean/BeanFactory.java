@@ -15,9 +15,10 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -31,6 +32,7 @@ public class BeanFactory {
     private final String rootPackage;
     private List<BeanDefinition> beanDefinitions;
     private Predicate<Field> cannotBeFulfilledByBeanDefinitions = field -> !canBeFulfilled(field.getType());
+    private Map<BeanDefinition, Object> beans = new HashMap<>();
 
 
     public static BeanFactory getInstance() {
@@ -83,12 +85,21 @@ public class BeanFactory {
                             .map(BeanDefinition.FromType::new)
                             .collect(Collectors.toList())
             );
+            Set<Method> annotatedMethod = reflections.getMethodsAnnotatedWith(annotationClass);
             beanDefinitions.addAll(
-                    reflections.getMethodsAnnotatedWith(annotationClass)
+                    annotatedMethod
+                            .stream()
+                            .map(Method::getDeclaringClass)
+                            .map(BeanDefinition.FromType::new)
+                            .collect(Collectors.toList())
+            );
+            beanDefinitions.addAll(
+                    annotatedMethod
                             .stream()
                             .map(BeanDefinition.FromMethod::new)
                             .collect(Collectors.toList())
             );
+
         }
 
         logger.info("Found bean definitions: " + beanDefinitions);
@@ -109,10 +120,43 @@ public class BeanFactory {
     }
 
     public void initializeBeans() {
+        List<BeanDefinition> unresolvedBeans = new ArrayList<>(this.beanDefinitions);
+        while (!unresolvedBeans.isEmpty()) {
+            unresolvedBeans
+                    .stream()
+                    .map(StreamUtils.print("Beans "))
+                    .filter(hasNoUnresolvedDependencies(unresolvedBeans))
+                    .forEach(initializeBean(unresolvedBeans));
 
+            unresolvedBeans.removeAll(beans.keySet());
+        }
     }
 
-    public <T> BeanFactory getBean(Class<T> cls) {
-        return null;
+
+    private Predicate<BeanDefinition> hasNoUnresolvedDependencies(final List<BeanDefinition> unresolvedBeans) {
+        return beanDefinition -> {
+            List<BeanDefinition> dependencies = new ArrayList<>(beanDefinition.beanDependencies);
+            dependencies.retainAll(unresolvedBeans);
+            return dependencies.isEmpty();//E.g the intersection of unresolved and current dependencies is empty
+        };
+    }
+
+    private Consumer<BeanDefinition> initializeBean(final List<BeanDefinition> unresolvedBeans) {
+        return beanDefinition -> {
+            Object obj = beanDefinition.initialize();
+            beans.put(beanDefinition, obj);
+        };
+    }
+
+    public <T> T getBean(Class<T> cls) {
+        for (Entry<BeanDefinition, Object> entry : beans.entrySet()) {
+            if (entry.getKey().canFulfill(cls)) {
+                return (T) entry.getValue();
+            }
+        }
+        BeanDefinition db = new BeanDefinition.FromType(cls);
+        Object bean = db.initialize();
+        beans.put(db, bean);
+        return (T) bean;
     }
 }
