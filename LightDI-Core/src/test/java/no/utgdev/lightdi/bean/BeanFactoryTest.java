@@ -8,22 +8,20 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsNull.nullValue;
 
 public class BeanFactoryTest {
 
+    private BeanFactory factory;
+
     @Before
     public void setUp() throws Exception {
-        BeanFactory.start("no.utgdev.lightdi.example.beanfactorytest");
-        assertThat(BeanFactory.getInstance(), is(not(nullValue())));
+        factory = new BeanFactory("no.utgdev.lightdi.example.beanfactorytest");
     }
 
     @Test
     public void scanningClassPathShouldFindBeanAnnotatedTypesAndMethods() throws Exception {
-        List<BeanDefinition> beanDefinitions = BeanFactory.getInstance().getAllBeanDefinitions();
+        List<BeanDefinition> beanDefinitions = factory.getAllBeanDefinitions();
 
         assertThat(beanDefinitions, contains(ClassWithBeanAnnotation.class));   //Defined in ClassWithBeanAnnotation
         assertThat(beanDefinitions, contains(String.class));                    //Defined in ClassWithMethodBeanAnnotation
@@ -36,7 +34,7 @@ public class BeanFactoryTest {
 
             @Override
             public void describeTo(Description description) {
-                description.appendText(cls.toString() +" to be in list. But it was not");
+                description.appendText(cls.toString() + " to be in list. But it was not");
             }
 
             @Override

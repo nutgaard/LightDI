@@ -49,7 +49,7 @@ public class BeanFactory {
         instance = new BeanFactory(rootPackage);
     }
 
-    public BeanFactory(String rootPackage) {
+    BeanFactory(String rootPackage) {
         this.rootPackage = rootPackage;
         this.beanDefinitions = new LinkedList<>();
         scanForBeanDefinitions();

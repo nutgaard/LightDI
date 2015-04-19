@@ -29,7 +29,6 @@ public class AOPRegistry {
         logger.info("Scanning for annotations annotated with AOPAnnotation.class");
         registry = reflections.getTypesAnnotatedWith(AOPAnnotation.class, true)
                 .stream()
-                .filter((Class<?> cls) -> cls != AOPAnnotation.class)
                 .map(cls -> (Class<? extends Annotation>) cls)
                 .map(AOPConfig::new)
                 .collect(Collectors.toList());

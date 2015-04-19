@@ -1,6 +1,5 @@
 package no.utgdev.lightdi.bean;
 
-import no.utgdev.lightdi.aop.AOPRegistry;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,12 +12,13 @@ public class BeanDefinitionTest {
 
     @Before
     public void setup() {
-        AOPRegistry.getInstance();
+        BeanFactory.start("");
     }
 
     @Test
     public void scanningForDependenciesFindsAnnotatedFields() throws Exception {
         BeanDefinition.FromType fromType = new BeanDefinition.FromType(ClassWithAnnotatedFields.class);
+        fromType.findBeanDependencies();
 
         assertThat(fromType.beanDependencies.size(), is(1));
 

@@ -10,8 +10,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
-import static org.powermock.api.mockito.PowerMockito.doNothing;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.*;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(BeanFactory.class)
@@ -19,8 +18,11 @@ public class LightDITest {
 
     @Before
     public void setUp() throws Exception {
+        BeanFactory factory = mock(BeanFactory.class);
         mockStatic(BeanFactory.class);
         doNothing().when(BeanFactory.class, "start", Mockito.anyString());
+        doReturn(factory).when(BeanFactory.class, "getInstance");
+
         Whitebox.setInternalState(LightDI.class, "instance", (LightDI) null);
     }
 
